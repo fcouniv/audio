@@ -34,6 +34,21 @@
     #podcastSection {
       display: none;
     }
+    #fakePlayer {
+      display: none;
+      margin: 20px 0;
+      background-color: #eee;
+      border-radius: 5px;
+      height: 20px;
+      width: 100%;
+      overflow: hidden;
+    }
+    #progressBar {
+      height: 100%;
+      background-color: #4CAF50;
+      width: 0%;
+      transition: width 1s linear;
+    }
   </style>
 </head>
 <body>
@@ -51,27 +66,29 @@
 
   <div id="podcastSection">
     <p>Veuillez écouter attentivement le podcast ci-dessous. Le bouton pour accéder au questionnaire apparaîtra automatiquement après 8 minutes d'écoute réelle.</p>
-    <audio id="podcast" controls preload="auto">
-      <source src="forme_sonore_gps.mp3" type="audio/mpeg">
-      Votre navigateur ne prend pas en charge l'élément audio.
-    </audio>
+    <button id="startBtn">Commencer l'écoute</button>
+    <div id="fakePlayer">
+      <div id="progressBar"></div>
+    </div>
   </div>
 
   <button id="continueBtn" onclick="location.href='https://forms.gle/ton_formulaire'">Accéder au questionnaire</button>
+
+  <audio id="podcast" style="display:none;">
+    <source src="forme_sonore_gps.mp3" type="audio/mpeg">
+    Votre navigateur ne prend pas en charge l'élément audio.
+  </audio>
 
   <script>
     const audio = document.getElementById('podcast');
     const continueBtn = document.getElementById('continueBtn');
     const consentCheckbox = document.getElementById('consentCheckbox');
     const podcastSection = document.getElementById('podcastSection');
+    const startBtn = document.getElementById('startBtn');
+    const fakePlayer = document.getElementById('fakePlayer');
+    const progressBar = document.getElementById('progressBar');
 
     let allowedTime = 0;
-
-    const checkConditions = () => {
-      if (allowedTime >= 480 && consentCheckbox.checked) {
-        continueBtn.style.display = 'block';
-      }
-    };
 
     consentCheckbox.addEventListener('change', () => {
       if (consentCheckbox.checked) {
@@ -82,20 +99,21 @@
       }
     });
 
-    const interval = setInterval(() => {
-      const currentTime = Math.floor(audio.currentTime);
-      const duration = Math.floor(audio.duration || 480);
-      allowedTime = Math.max(allowedTime, currentTime);
-      if (allowedTime >= 480) {
-        clearInterval(interval);
-        checkConditions();
-      }
-    }, 1000);
+    startBtn.addEventListener('click', () => {
+      audio.play();
+      startBtn.style.display = 'none';
+      fakePlayer.style.display = 'block';
+      const duration = 480; // 8 minutes
+      const interval = setInterval(() => {
+        allowedTime++;
+        const progress = Math.min((allowedTime / duration) * 100, 100);
+        progressBar.style.width = progress + '%';
 
-    audio.addEventListener('seeking', () => {
-      if (audio.currentTime > allowedTime + 1) {
-        audio.currentTime = allowedTime;
-      }
+        if (allowedTime >= duration) {
+          clearInterval(interval);
+          continueBtn.style.display = 'block';
+        }
+      }, 1000);
     });
   </script>
 </body>

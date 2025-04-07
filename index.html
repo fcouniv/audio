@@ -44,32 +44,47 @@
   <p>Veuillez écouter attentivement le podcast ci-dessous. Le bouton pour accéder au questionnaire apparaîtra automatiquement après 8 minutes d'écoute.</p>
 
   <!-- Remplace le lien ci-dessous par ton vrai fichier audio -->
-  <audio id="podcast" controls>
-    <source src="forme_sonore_gps.mp3" type="audio/mpeg">
-    Votre navigateur ne prend pas en charge l'élément audio.
-  </audio>
+  <audio id="podcast" controls preload="auto">
+  <source src="forme_sonore_gps.mp3" type="audio/mpeg">
+  Votre navigateur ne prend pas en charge l'élément audio.
+</audio>
 
-  <div id="timer">Temps restant : 8:00</div>
+<div id="timer">Temps restant : 8:00</div>
 
-  <button id="continueBtn" onclick="location.href='https://forms.gle/ton_formulaire'">Accéder au questionnaire</button>
+<button id="continueBtn" onclick="location.href='https://forms.gle/ton_formulaire'">Accéder au questionnaire</button>
 
-  <script>
-    const timerDisplay = document.getElementById('timer');
-    const continueBtn = document.getElementById('continueBtn');
+<script>
+  const audio = document.getElementById('podcast');
+  const timerDisplay = document.getElementById('timer');
+  const continueBtn = document.getElementById('continueBtn');
 
-    let secondsRemaining = 8 * 60;
-    let interval = setInterval(() => {
-      secondsRemaining--;
-      const minutes = Math.floor(secondsRemaining / 60);
-      const seconds = secondsRemaining % 60;
-      timerDisplay.textContent = `Temps restant : ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  let allowedTime = 0;
 
-      if (secondsRemaining <= 0) {
-        clearInterval(interval);
-        timerDisplay.textContent = "Vous pouvez maintenant accéder au questionnaire.";
-        continueBtn.style.display = 'block';
-      }
-    }, 1000);
-  </script>
+  // Mise à jour du timer
+  setInterval(() => {
+    const currentTime = Math.floor(audio.currentTime);
+    const duration = Math.floor(audio.duration || 480); // fallback 8 min
+    allowedTime = Math.max(allowedTime, currentTime);
+
+    const timeLeft = duration - currentTime;
+    const min = Math.floor(timeLeft / 60);
+    const sec = String(timeLeft % 60).padStart(2, '0');
+    timerDisplay.textContent = timeLeft > 0
+      ? `Temps restant : ${min}:${sec}`
+      : 'Vous pouvez maintenant accéder au questionnaire.';
+
+    if (currentTime >= duration) {
+      continueBtn.style.display = 'block';
+    }
+  }, 1000);
+
+  // Bloquer l'avance rapide
+  audio.addEventListener('seeking', () => {
+    if (audio.currentTime > allowedTime + 1) {
+      audio.currentTime = allowedTime;
+    }
+  });
+</script>
+
 </body>
 </html>

@@ -14,13 +14,6 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    #startBtn {
-      display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-    }
     #continueBtn {
       display: none;
       margin: 30px auto;
@@ -32,59 +25,78 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    #timer {
-      font-weight: bold;
-      color: #c0392b;
-      text-align: center;
+    #consentContainer {
+      margin: 20px 0;
+    }
+    #consentCheckbox {
+      margin-right: 10px;
+    }
+    #podcastSection {
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Écoutez le podcast avant de répondre</h1>
-  <p>Veuillez écouter attentivement le podcast ci-dessous. Le bouton pour accéder au questionnaire apparaîtra automatiquement après 8 minutes d'écoute.</p>
+  <p>Avant de commencer l'expérience, veuillez lire attentivement le formulaire de consentement ci-dessous. Vous devrez cocher la case pour valider votre accord avant d'accéder au contenu audio.</p>
 
-  <!-- Remplace le lien ci-dessous par ton vrai fichier audio -->
-  <audio id="podcast" controls preload="auto">
-  <source src="forme_sonore_gps.mp3" type="audio/mpeg">
-  Votre navigateur ne prend pas en charge l'élément audio.
-</audio>
+  <div id="consentContainer">
+    <h2>Formulaire de consentement</h2>
+    <p>Vous êtes invité·e à participer à une étude portant sur la perception et la compréhension d’un contenu audio. Votre participation est volontaire. Vous écouterez un podcast de 8 minutes, puis répondrez à un questionnaire anonyme d’environ 50 questions. Vous pouvez interrompre votre participation à tout moment sans justification. Les données recueillies seront anonymisées et utilisées uniquement à des fins de recherche scientifique.</p>
+    <label>
+      <input type="checkbox" id="consentCheckbox">
+      J’ai lu et compris les conditions de participation et j’accepte de prendre part à cette étude.
+    </label>
+  </div>
 
-<div id="timer">Temps restant : 8:00</div>
+  <div id="podcastSection">
+    <p>Veuillez écouter attentivement le podcast ci-dessous. Le bouton pour accéder au questionnaire apparaîtra automatiquement après 8 minutes d'écoute réelle.</p>
+    <audio id="podcast" controls preload="auto">
+      <source src="forme_sonore_gps.mp3" type="audio/mpeg">
+      Votre navigateur ne prend pas en charge l'élément audio.
+    </audio>
+  </div>
 
-<button id="continueBtn" onclick="location.href='https://forms.gle/ton_formulaire'">Accéder au questionnaire</button>
+  <button id="continueBtn" onclick="location.href='https://forms.gle/ton_formulaire'">Accéder au questionnaire</button>
 
-<script>
-  const audio = document.getElementById('podcast');
-  const timerDisplay = document.getElementById('timer');
-  const continueBtn = document.getElementById('continueBtn');
+  <script>
+    const audio = document.getElementById('podcast');
+    const continueBtn = document.getElementById('continueBtn');
+    const consentCheckbox = document.getElementById('consentCheckbox');
+    const podcastSection = document.getElementById('podcastSection');
 
-  let allowedTime = 0;
+    let allowedTime = 0;
 
-  // Mise à jour du timer
-  setInterval(() => {
-    const currentTime = Math.floor(audio.currentTime);
-    const duration = Math.floor(audio.duration || 480); // fallback 8 min
-    allowedTime = Math.max(allowedTime, currentTime);
+    const checkConditions = () => {
+      if (allowedTime >= 480 && consentCheckbox.checked) {
+        continueBtn.style.display = 'block';
+      }
+    };
 
-    const timeLeft = duration - currentTime;
-    const min = Math.floor(timeLeft / 60);
-    const sec = String(timeLeft % 60).padStart(2, '0');
-    timerDisplay.textContent = timeLeft > 0
-      ? `Temps restant : ${min}:${sec}`
-      : 'Vous pouvez maintenant accéder au questionnaire.';
+    consentCheckbox.addEventListener('change', () => {
+      if (consentCheckbox.checked) {
+        podcastSection.style.display = 'block';
+      } else {
+        podcastSection.style.display = 'none';
+        continueBtn.style.display = 'none';
+      }
+    });
 
-    if (currentTime >= duration) {
-      continueBtn.style.display = 'block';
-    }
-  }, 1000);
+    const interval = setInterval(() => {
+      const currentTime = Math.floor(audio.currentTime);
+      const duration = Math.floor(audio.duration || 480);
+      allowedTime = Math.max(allowedTime, currentTime);
+      if (allowedTime >= 480) {
+        clearInterval(interval);
+        checkConditions();
+      }
+    }, 1000);
 
-  // Bloquer l'avance rapide
-  audio.addEventListener('seeking', () => {
-    if (audio.currentTime > allowedTime + 1) {
-      audio.currentTime = allowedTime;
-    }
-  });
-</script>
-
+    audio.addEventListener('seeking', () => {
+      if (audio.currentTime > allowedTime + 1) {
+        audio.currentTime = allowedTime;
+      }
+    });
+  </script>
 </body>
 </html>
